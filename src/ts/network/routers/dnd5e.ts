@@ -2,6 +2,7 @@ import { Router } from "./baseRouter";
 import { ModuleLogger } from "../../utils/logger";
 import { resolveRequestUser, serializeWithPermission, assertWritePermission } from "../../utils/permissions";
 import { getFoundryVersionMajor, getSystemVersion } from "../../utils/version";
+import { getDnd5eMovementAndInitiative } from "../../utils/dnd5eStats";
 
 export const router = new Router("dnd5eRouter");
 
@@ -76,6 +77,7 @@ Hooks.once('init', () => {
                     }
 
                     if (details.includes("stats")) {
+                        const { speed, speedUnits, initBonus } = getDnd5eMovementAndInitiative(actor.system);
                         const classItems = actor.items.filter((i: any) => i.type === 'class');
                         const level = classItems.reduce((sum: number, i: any) => sum + (i.system.levels ?? 0), 0);
                         results.stats = {
@@ -90,10 +92,11 @@ Hooks.once('init', () => {
                                 max: actor.system.attributes.hp.max,
                                 temp: actor.system.attributes.hp.temp ?? 0,
                             },
-                            speed: actor.system.attributes.movement.walk ?? 0,
+                            speed,
+                            speedUnits,
                             exhaustion: actor.system.attributes.exhaustion ?? 0,
                             inspiration: actor.system.attributes.inspiration ?? false,
-                            initBonus: (actor.system.attributes.init as any)?.total ?? (actor.system.abilities as any)?.dex?.mod ?? 0,
+                            initBonus,
                             deathSaves: {
                                 success: (actor.system.attributes.death as any)?.success ?? 0,
                                 failure: (actor.system.attributes.death as any)?.failure ?? 0,
